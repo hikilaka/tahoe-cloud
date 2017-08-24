@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 import youtube_dl
 
@@ -10,11 +11,12 @@ DEFAULT_OUT_DIR = './videos'
 
 SAVE_FORMAT = '%(id)s.%(ext)s'
 
+
 def get_chan_videos(channel_url, download=False, output='.'):
     """
         Also works with individual video ids!
     """
-    with youtube_dl.YoutubeDL({'outtmpl': output+'/'+SAVE_FORMAT}) as yt:
+    with youtube_dl.YoutubeDL({'outtmpl': os.path.join(output, SAVE_FORMAT)}) as yt:
         results = yt.extract_info(channel_url, download=download)
 
     if 'entries' not in results:
@@ -35,16 +37,12 @@ def filter_results(results):
 
 
 def make_index_file(filename, videos, append=False):
-    if append:
+    if append and os.path.exists(filename):
         with open(filename, 'r') as file:
             current = json.load(file)
             videos = {**current, **videos}
     with open(filename, 'w+') as file:
         file.write(json.dumps(videos, indent=4))
-
-
-def test_hook(status):
-    print(json.dumps(status, indent=4))
 
 
 if __name__ == '__main__':
@@ -69,6 +67,7 @@ if __name__ == '__main__':
         print('No videos found')
         sys.exit(0)
 
-    make_index_file(args.index, videos, args.append)
+    make_index_file(os.path.join(args.output, args.index),
+                    videos, args.append)
     print('Completed process')
 
